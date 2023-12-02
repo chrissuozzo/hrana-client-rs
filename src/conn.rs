@@ -86,7 +86,7 @@ struct HranaConn {
 
 fn get_ws_config() -> tungstenite::protocol::WebSocketConfig {
     tungstenite::protocol::WebSocketConfig {
-        max_send_queue: Some(1 << 20),
+        max_write_buffer_size: (1 << 20),
         ..Default::default()
     }
 }
@@ -98,7 +98,7 @@ impl HranaConn {
             .headers_mut()
             .insert("Sec-WebSocket-Protocol", HeaderValue::from_static("hrana1"));
 
-        let (ws, _) = connect_async_with_config(request, Some(get_ws_config())).await?;
+        let (ws, _) = connect_async_with_config(request, Some(get_ws_config()), false).await?;
         let (sender, receiver) = mpsc::unbounded_channel();
 
         let mut this = Self {
@@ -161,7 +161,9 @@ impl HranaConn {
         let stream_id = self.state.id_allocator.allocate();
 
         let cb: HandleResponseCallback = Box::new(move |state, resp| {
-            let Some(state) = state.streams.get_mut(&stream_id) else { return Err(Error::StreamDoesNotExist)};
+            let Some(state) = state.streams.get_mut(&stream_id) else {
+                return Err(Error::StreamDoesNotExist);
+            };
             *state = match state {
                 StreamState::Opening { waiters } => match resp {
                     Ok(proto::Response::OpenStream(_)) => {
