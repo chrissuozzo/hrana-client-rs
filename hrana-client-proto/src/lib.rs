@@ -311,6 +311,8 @@ impl_from_value!(u8, Integer);
 impl_from_value!(u16, Integer);
 impl_from_value!(u32, Integer);
 
+impl_from_value!(bool, Integer);
+
 // rust doesn't like usize.into() for i64, so do it manually.
 impl From<usize> for Value {
     fn from(t: usize) -> Value {
